@@ -1,3 +1,4 @@
+import os
 import discord
 import json
 import asyncio
@@ -13,6 +14,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 # File where user data will be saved
 DATA_FILE = 'voice_time_data.json'
+TOKEN = os.getenv('DISCORD_TOKEN')
 # Load the persistent data from the JSON file
 def load_data():
     try:
@@ -38,6 +40,17 @@ channel_members = {}
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
+    for guild in bot.guilds:
+        for channel in guild.voice_channels:
+            for member in channel.members:
+                print(member.id)
+                print(channel.id)
+                print(guild.id)
+                user_join_times[member.id] = datetime.now()
+                if channel.id not in channel_members:
+                    channel_members[channel.id] = set()
+                channel_members[channel.id].add(member.id)
+
 
 @bot.event
 async def on_voice_state_update(member, before, after):
@@ -92,12 +105,12 @@ async def stats(ctx, member: discord.Member = None):
     time_with_others = user_data[member.id]["time_with_others"]
 
     # Format total time
-    total_time_str = str(total_time_spent)
-    if len(total_time_str) > 7:
-        total_time_str = total_time_str[:7]
+    # total_time_str = str(total_time_spent)
+    # if len(total_time_str) > 7:
+    #     total_time_str = total_time_str[:7]
 
     embed = discord.Embed(title=f"Stats for {member.display_name}")
-    embed.add_field(name="Total Time in Voice Call (mins)", value=total_time_str)
+    embed.add_field(name="Total Time in Voice Call (mins)", value=str(total_time_spent))
     
     if time_with_others:
         time_str = "\n".join([f"<@{other_member}>: {str(round(t, 2))}" for other_member, t in list(time_with_others.items()).sort(reverse=True)[:10]])
