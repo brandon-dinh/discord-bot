@@ -39,7 +39,7 @@ channel_members = {}
 
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user}")
+    # Add members already in voice channels on launch
     for guild in bot.guilds:
         for channel in guild.voice_channels:
             for member in channel.members:
@@ -50,6 +50,8 @@ async def on_ready():
                 if channel.id not in channel_members:
                     channel_members[channel.id] = set()
                 channel_members[channel.id].add(member.id)
+
+    print(f"Logged in as {bot.user}")
 
 
 @bot.event
@@ -65,22 +67,24 @@ async def on_voice_state_update(member, before, after):
 
     # Handle user leaving a voice channel
     if before.channel is not None and after.channel is None:
+        print(user_data)
+        print(type(member.id))
         if member.id in user_join_times:
             join_time = user_join_times[member.id]
             total_time = datetime.now() - join_time
-            if member.id not in user_data:
-                user_data[member.id] = {"total_time_spent": 0.0, "time_with_others": {}}
-            user_data[member.id]["total_time_spent"] += total_time.total_seconds() / 60.0
+            if str(member.id) not in user_data:
+                user_data[str(member.id)] = {"total_time_spent": 0.0, "time_with_others": {}}
+            user_data[str(member.id)]["total_time_spent"] += total_time.total_seconds()
             
             # Update time spent with other members in the same channel
             if before.channel.id in channel_members:
                 for other_user_id in channel_members[before.channel.id]:
                     if other_user_id != member.id:
-                        if other_user_id not in user_data[member.id]["time_with_others"]:
-                            user_data[member.id]["time_with_others"][other_user_id] = 0.0
+                        if other_user_id not in user_data[str(member.id)]["time_with_others"]:
+                            user_data[str(member.id)]["time_with_others"][other_user_id] = 0.0
                         time_diff = datetime.now() - max(join_time, user_join_times[other_user_id])
-                        user_data[member.id]["time_with_others"][other_user_id] += time_diff.total_seconds() / 60.0
-                        user_data[other_user_id]["time_with_others"][member.id] += time_diff.total_seconds() / 60.0
+                        user_data[str(member.id)]["time_with_others"][other_user_id] += time_diff.total_seconds()
+                        user_data[other_user_id]["time_with_others"][member.id] += time_diff.total_seconds()
                         
             # Remove member from channel tracking
             channel_members[before.channel.id].remove(member.id)
@@ -101,8 +105,8 @@ async def stats(ctx, member: discord.Member = None):
         await ctx.send(f"No data found for {member.display_name}.")
         return
     
-    total_time_spent = round(user_data[member.id]["total_time_spent"], 2)
-    time_with_others = user_data[member.id]["time_with_others"]
+    total_time_spent = round(user_data[str(member.id)]["total_time_spent"], 2)
+    time_with_others = user_data[str(member.id)]["time_with_others"]
 
     # Format total time
     # total_time_str = str(total_time_spent)
