@@ -13,7 +13,6 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 # File where user data will be saved
 DATA_FILE = 'voice_time_data.json'
-TOKEN = 'MTMyNDU2OTgyNzc3OTY3NDE5NA.G5VHPs.Nred6og1FWg1MCpHLh1jmyvcD_1tjrtsj06mrM'
 # Load the persistent data from the JSON file
 def load_data():
     try:
